@@ -126,6 +126,8 @@ check_glab() {
 		say "glab signs you in to GitLab and fetches the kit from its private repository."
 		ask "glab authenticated to the Vistaprint GitLab is required. Install it?" \
 			|| die "glab is required. Install it with 'brew install glab' and run this again."
+		say "Updating Homebrew's formula list first (brew update)."
+		brew update || warn "brew update failed: installing from the current formula list."
 		brew install glab
 	fi
 	ok "$(glab --version 2>/dev/null | head -n 1)"

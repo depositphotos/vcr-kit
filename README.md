@@ -13,7 +13,7 @@ curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/instal
 This repository holds only the bootstrap. It asks before every step:
 
 1. checks that it runs on macOS;
-2. installs Homebrew and the GitLab CLI if they are missing;
+2. installs Homebrew and the GitLab CLI if they are missing (Homebrew's formula list is updated before the install);
 3. signs you in to GitLab in the browser;
 4. fetches the rest of the kit from a private repository and starts `vcr-kit setup`.
 
