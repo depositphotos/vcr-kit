@@ -8,7 +8,8 @@
 # private kit repository into ~/.local/share/vcr-kit, the `vcr-kit` command in ~/.local/bin, then `vcr-kit setup`.
 # Running it again updates the clone.
 #
-# Env overrides: VCR_KIT_HOME (where the kit is cloned), VCR_KIT_BIN (where the `vcr-kit` command is linked).
+# Env overrides: VCR_KIT_HOME (where the kit is cloned), VCR_KIT_BIN (where the `vcr-kit` command is linked),
+# VCR_KIT_EXPRESS=1 (express setup: every question takes its default, here and in `vcr-kit setup`).
 #
 # Everything runs from main(), called on the last line, so a truncated download executes nothing.
 # Compatible with bash 3.2 (the macOS system bash). macOS only.
@@ -36,9 +37,14 @@ die()  { printf '%s✗ %s%s\n' "$RED" "$*" "$RESET" >&2; exit 1; }
 step() { printf '\n%s%s%s\n' "$BOLD" "$*" "$RESET"; }
 
 # Under `curl | bash` stdin is the script itself, so every answer is read from the terminal.
+# With VCR_KIT_EXPRESS=1 every question takes its default (yes); the variable reaches `vcr-kit setup` too.
 ask() {   # ask "question" → 0 for yes (the default), 1 for no
 	local reply
 	printf '%s [Y/n]: ' "$1" >/dev/tty
+	if [ -n "${VCR_KIT_EXPRESS:-}" ]; then
+		printf 'yes (express)\n' >/dev/tty
+		return 0
+	fi
 	IFS= read -r reply </dev/tty || reply="n"
 	case "$reply" in
 		""|y|Y|yes|Yes|YES) return 0 ;;
