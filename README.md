@@ -7,14 +7,15 @@ command-line tools they rely on, and access to the services they use.
 curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/install.sh | bash
 ```
 
-For a working VistaCreate project with the fewest questions (every production repository, the developer plugins,
-the optional parts), run the express setup. It still asks for the sign-ins and secrets only you can give:
+This is **express** by default: it sets up a working VistaCreate project with the team's preset (every production
+repository, the developer plugins, the optional parts) and asks only for the sign-ins and secrets only you can give.
+To choose every step yourself, run it **detailed**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/install.sh | VCR_KIT_EXPRESS=1 bash
+curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/install.sh | VCR_KIT_DETAILED=1 bash
 ```
 
-This repository holds only the bootstrap. It asks before every step (in express setup it takes the default):
+This repository holds only the bootstrap. Its steps (detailed asks before each one):
 
 1. checks that it runs on macOS;
 2. installs Homebrew and the GitLab CLI if they are missing (Homebrew's formula list is updated before the install);
