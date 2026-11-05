@@ -4,11 +4,13 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/install.sh | bash
 #
-# It asks before every step: Homebrew, the GitLab CLI (glab), a browser sign-in to GitLab, a clone of the
-# private kit repository into ~/.local/share/vcr-kit, the `vcr-kit` command in ~/.local/bin, then `vcr-kit setup`.
+# Its steps: Homebrew, the GitLab CLI (glab), a browser sign-in to GitLab, a clone of the private kit repository into
+# ~/.local/share/vcr-kit, the `vcr-kit` command in ~/.local/bin, then `vcr-kit setup`. Express by default (each step
+# goes ahead); VCR_KIT_DETAILED=1 asks before every step.
 # Running it again updates the clone.
 #
-# Env overrides: VCR_KIT_HOME (where the kit is cloned), VCR_KIT_BIN (where the `vcr-kit` command is linked).
+# Env overrides: VCR_KIT_HOME (where the kit is cloned), VCR_KIT_BIN (where the `vcr-kit` command is linked),
+# VCR_KIT_DETAILED=1 (ask before every step, here and in `vcr-kit setup`; the default is express).
 #
 # Everything runs from main(), called on the last line, so a truncated download executes nothing.
 # Compatible with bash 3.2 (the macOS system bash). macOS only.
@@ -36,9 +38,15 @@ die()  { printf '%s✗ %s%s\n' "$RED" "$*" "$RESET" >&2; exit 1; }
 step() { printf '\n%s%s%s\n' "$BOLD" "$*" "$RESET"; }
 
 # Under `curl | bash` stdin is the script itself, so every answer is read from the terminal.
+# Express by default: every question takes its default (yes), and `vcr-kit setup` runs express too. With
+# VCR_KIT_DETAILED=1 every question waits for an answer; the variable reaches `vcr-kit setup` as well.
 ask() {   # ask "question" → 0 for yes (the default), 1 for no
 	local reply
 	printf '%s [Y/n]: ' "$1" >/dev/tty
+	if [ -z "${VCR_KIT_DETAILED:-}" ]; then
+		printf 'yes (express)\n' >/dev/tty
+		return 0
+	fi
 	IFS= read -r reply </dev/tty || reply="n"
 	case "$reply" in
 		""|y|Y|yes|Yes|YES) return 0 ;;
