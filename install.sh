@@ -4,13 +4,14 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/depositphotos/vcr-kit/master/install.sh | bash
 #
-# Its steps: Homebrew, the GitLab CLI (glab), a browser sign-in to GitLab, a clone of the private kit repository into
-# ~/.local/share/vcr-kit, the `vcr-kit` command in ~/.local/bin, then `vcr-kit setup`. Express by default (each step
+# Its steps: Homebrew, the GitLab CLI (glab), a browser sign-in to GitLab, a clone of the private kit repository's
+# release branch into ~/.local/share/vcr-kit, the `vcr-kit` command in ~/.local/bin, then `vcr-kit setup`. Express by default (each step
 # goes ahead); VCR_KIT_DETAILED=1 asks before every step.
-# Running it again updates the clone.
+# Running it again updates the clone (and puts it on the release branch when it is on another one).
 #
 # Env overrides: VCR_KIT_HOME (where the kit is cloned), VCR_KIT_BIN (where the `vcr-kit` command is linked),
-# VCR_KIT_DETAILED=1 (ask before every step, here and in `vcr-kit setup`; the default is express).
+# VCR_KIT_DETAILED=1 (ask before every step, here and in `vcr-kit setup`; the default is express),
+# VCR_KIT_REF (the kit's branch, default release; master runs the newest, unreleased code).
 #
 # Everything runs from main(), called on the last line, so a truncated download executes nothing.
 # Compatible with bash 3.2 (the macOS system bash). macOS only.
@@ -22,6 +23,7 @@ KIT_PATH="vistaprint-org/vistacreate/automation/vcr-kit"
 KIT_URL="https://$GITLAB_HOST/$KIT_PATH.git"
 KIT_HOME="${VCR_KIT_HOME:-$HOME/.local/share/vcr-kit}"
 KIT_BIN="${VCR_KIT_BIN:-$HOME/.local/bin}"
+KIT_REF="${VCR_KIT_REF:-release}"
 
 # ------------------------------------------------------------------- output --
 
@@ -165,8 +167,8 @@ fetch_kit() {
 	step "The kit"
 	check_git
 	if [ -d "$KIT_HOME/.git" ]; then
-		git -C "$KIT_HOME" pull --ff-only --quiet || die "Could not update $KIT_HOME (local changes?). Fix it, or move it away and run this again."
-		ok "Updated $KIT_HOME"
+		follow_branch || die "Could not update $KIT_HOME to its $KIT_REF branch (local changes?). Fix it, or move it away and run this again."
+		ok "Updated $KIT_HOME ($KIT_REF)"
 		return
 	fi
 	if [ -e "$KIT_HOME" ]; then
@@ -174,10 +176,22 @@ fetch_kit() {
 	fi
 	mkdir -p "$(dirname "$KIT_HOME")"
 	# HTTPS with glab as the only credential helper: works with the browser sign-in, no SSH key needed.
-	git -c credential.helper= -c 'credential.helper=!glab auth git-credential' clone --quiet "$KIT_URL" "$KIT_HOME"
+	git -c credential.helper= -c 'credential.helper=!glab auth git-credential' clone --quiet --branch "$KIT_REF" "$KIT_URL" "$KIT_HOME"
 	git -C "$KIT_HOME" config --add credential.helper ''
 	git -C "$KIT_HOME" config --add credential.helper '!glab auth git-credential'
-	ok "Cloned into $KIT_HOME"
+	ok "Cloned into $KIT_HOME ($KIT_REF)"
+}
+
+follow_branch() {   # puts the clone on KIT_REF (switching to it once) and fast-forwards it
+	git -C "$KIT_HOME" fetch --quiet origin "+refs/heads/$KIT_REF:refs/remotes/origin/$KIT_REF" || return 1
+	if [ "$(git -C "$KIT_HOME" symbolic-ref --quiet --short HEAD 2>/dev/null || true)" != "$KIT_REF" ]; then
+		if git -C "$KIT_HOME" rev-parse --quiet --verify "refs/heads/$KIT_REF" >/dev/null; then
+			git -C "$KIT_HOME" switch --quiet "$KIT_REF" || return 1
+		else
+			git -C "$KIT_HOME" switch --quiet --create "$KIT_REF" --track "origin/$KIT_REF" || return 1
+		fi
+	fi
+	git -C "$KIT_HOME" merge --ff-only --quiet "origin/$KIT_REF"
 }
 
 link_command() {
@@ -206,7 +220,7 @@ link_command() {
 
 main() {
 	check_terminal
-	printf '%svcr-kit%s — sets up the VistaCreate engineering kit on this Mac. It asks before every step.\n' "$BOLD" "$RESET"
+	printf '%svcr-kit%s — sets up the VistaCreate engineering kit on this Mac.\n' "$BOLD" "$RESET"
 	check_macos
 	check_brew
 	check_glab
