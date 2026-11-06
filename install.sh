@@ -149,8 +149,10 @@ check_login() {
 		ok "Signed in to $GITLAB_HOST"
 		return
 	fi
-	say "Sign in to $GITLAB_HOST with your Vistaprint account; a browser window opens."
-	ask "Sign in now?" || die "The kit lives in a private GitLab repository, so a sign-in is required."
+	say "The kit and the team's repositories are private, in the GitLab group ${KIT_PATH%%/automation/*}. glab, GitLab's"
+	say "command-line tool, signs you in once: git clones with it, and agents open merge requests with it."
+	say "A browser window opens: sign in to $GITLAB_HOST with your Vistaprint account, authorize glab, then come back here."
+	ask "Sign in to GitLab now?" || die "The kit lives in a private GitLab repository, so a sign-in is required."
 	glab auth login --hostname "$GITLAB_HOST" --web --git-protocol https </dev/tty
 	glab auth status --hostname "$GITLAB_HOST" >/dev/null 2>&1 || die "The sign-in did not complete. Run this again."
 	ok "Signed in to $GITLAB_HOST"
@@ -221,6 +223,12 @@ link_command() {
 main() {
 	check_terminal
 	printf '%svcr-kit%s — sets up the VistaCreate engineering kit on this Mac.\n' "$BOLD" "$RESET"
+	say "Claude Code with the team's plugins, the workspace with the VistaCreate repositories, and the tokens the agents"
+	say "use. It takes 20-30 minutes; have these ready:"
+	say "  - your Vistaprint GitLab account, with access to the vistaprint-org/vistacreate group (signed in to in the browser);"
+	say "  - a seat in the company's Claude organisation;"
+	say "  - access to Jira (vistaprint.atlassian.net), Jenkins and Sentry, where you create two tokens on the way;"
+	say "  - your LDAP login and password, and the VPN for Jenkins and the dev cluster."
 	check_macos
 	check_brew
 	check_glab
